@@ -1,0 +1,178 @@
+<?xml version='1.0'?>
+<robot name="jelly">
+<!--0.07044 -0.17671 0.07019-->
+  <!-- Base Link -->
+  <link name="base_link">
+        <!--
+          Be careful to setup the coefficients for the inertial tensor,
+          otherwise your model will become unstable on Gazebo
+        -->
+
+        <visual>
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <geometry>
+            <mesh filename="package://jelly_description/meshes/jelly_mesh2.STL" scale="1 1 1" />
+          </geometry>
+          <material name="blue">
+            <color rgba="0 0.5 1 1"/>
+          </material>
+        </visual>
+        <!--
+        <visual name="caster">
+          <origin xyz="0 0 0" rpy="0 0 0" />
+          <geometry>
+            <sphere radius="0.05" />
+          </geometry>
+        </visual>
+        -->
+
+        <collision>
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <geometry>
+            <mesh filename="package://jelly_description/meshes/jelly_mesh2.STL" scale="1 1 1" />
+          </geometry>
+        </collision>
+    </link>
+
+  <!-- Thruster 1 -->
+  <link name="thruster_1">
+      <visual>
+      <origin xyz="0.16931 -0.13868 -0.01801" rpy="0 0 0.7854" />
+        <geometry>
+          <mesh filename="package://jelly_description/meshes/prop_mesh2.STL" scale="1 1 1" />
+        </geometry>
+      </visual>
+
+    </link>
+
+    <joint name="thruster_1_joint" type="continuous">
+      <axis xyz="1 0 0" />
+      <parent link="base_link" />
+      <child link="thruster_1" />
+    </joint>
+<!-- Thruster 2-->
+     <link name="thruster_2">
+      <visual>
+      <origin xyz="0.07044 -0.17671 0.07019" rpy="0 -1.5708 0" />
+        <geometry>
+          <mesh filename="package://jelly_description/meshes/prop_mesh2.STL" scale="1 1 1" />
+        </geometry>
+      </visual>
+
+      <visual name="caster">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <sphere radius="0.025" />
+        </geometry>
+      </visual>
+
+    </link>
+
+    <joint name="thruster_2_joint" type="continuous">
+      <axis xyz="1 0 0" />
+      <parent link="base_link" />
+      <child link="thruster_2" />
+    </joint>
+
+<!-- Thruster 3-->
+     <link name="thruster_3">
+      <visual>
+      <origin xyz="-0.06964 -0.17671 0.07019" rpy="0 -1.5708 0" />
+        <geometry>
+          <mesh filename="package://jelly_description/meshes/prop_mesh2.STL" scale="1 1 1" />
+        </geometry>
+      </visual>
+
+    </link>
+
+    <joint name="thruster_3_joint" type="continuous">
+      <axis xyz="1 0 0" />
+      <parent link="base_link" />
+      <child link="thruster_3" />
+    </joint>
+
+    <!-- Thruster 4-->
+     <link name="thruster_4">
+      <visual>
+      <origin xyz="-0.16848 -0.1387 -0.01801" rpy="0 0 -0.7854" />
+        <geometry>
+          <mesh filename="package://jelly_description/meshes/prop_mesh2.STL" scale="1 1 1" />
+        </geometry>
+      </visual>
+
+    </link>
+
+    <joint name="thruster_4_joint" type="continuous">
+      <axis xyz="1 0 0" />
+      <parent link="base_link" />
+      <child link="thruster_4" />
+    </joint>
+
+    <!-- Thruster 5-->
+     <link name="thruster_5">
+      <visual>
+      <origin xyz="-0.16197 0.1428 -0.01801" rpy="0 0 0.7854" />
+        <geometry>
+          <mesh filename="package://jelly_description/meshes/prop_mesh2.STL" scale="1 1 1" />
+        </geometry>
+      </visual>
+
+    </link>
+
+    <joint name="thruster_5_joint" type="continuous">
+      <axis xyz="1 0 0" />
+      <parent link="base_link" />
+      <child link="thruster_5" />
+    </joint>
+
+    <!-- Thruster 6-->
+     <link name="thruster_6">
+      <visual>
+      <origin xyz="-0.06964 0.17529 0.07019" rpy="0 -1.5708 0" />
+        <geometry>
+          <mesh filename="package://jelly_description/meshes/prop_mesh2.STL" scale="1 1 1" />
+        </geometry>
+      </visual>
+
+    </link>
+
+    <joint name="thruster_6_joint" type="continuous">
+      <axis xyz="1 0 0" />
+      <parent link="base_link" />
+      <child link="thruster_6" />
+    </joint>
+
+    <!-- Thruster 7-->
+     <link name="thruster_7">
+      <visual>
+      <origin xyz="0.07044 0.17529 0.07019" rpy="0 -1.5708 0" />
+        <geometry>
+          <mesh filename="package://jelly_description/meshes/prop_mesh2.STL" scale="1 1 1" />
+        </geometry>
+      </visual>
+
+    </link>
+
+    <joint name="thruster_7_joint" type="continuous">
+      <axis xyz="1 0 0" />
+      <parent link="base_link" />
+      <child link="thruster_7" />
+    </joint>
+
+    <!-- Thruster 8-->
+     <link name="thruster_8">
+      <visual>
+      <origin xyz="0.16931 0.13726 -0.01801" rpy="0 0 -0.7854" />
+        <geometry>
+          <mesh filename="package://jelly_description/meshes/prop_mesh2.STL" scale="1 1 1" />
+        </geometry>
+      </visual>
+
+    </link>
+
+    <joint name="thruster_8_joint" type="continuous">
+      <axis xyz="1 0 0" />
+      <parent link="base_link" />
+      <child link="thruster_8" />
+    </joint>
+</robot>

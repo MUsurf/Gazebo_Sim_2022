@@ -1,0 +1,3 @@
+<create>
+	<xacro:include filename="$(find create_description)/urdf/create.urdf.xacro"/>
+<create />

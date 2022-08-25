@@ -1,0 +1,41 @@
+<launch>
+  <arg name="debug" default="0"/>
+
+  <arg name="x" default="0"/>
+  <arg name="y" default="0"/>
+  <arg name="z" default="-0.15"/>
+  <arg name="roll" default="0.0"/>
+  <arg name="pitch" default="0.0"/>
+  <arg name="yaw" default="0.0"/>
+
+  <arg name="mode" default="default"/>
+  <arg name="namespace" default="jelly"/>
+  <arg name="use_ned_frame" default="false"/>
+
+  <include file="$(find uuv_gazebo_worlds)/launch/ocean_waves.launch">
+    <arg name="paused" value="true"/>
+  </include>
+
+  <include file="$(find jelly_description)/launch/robot_publisher.launch">
+    <arg name="debug" value="$(arg debug)"/>
+    <arg name="x" value="$(arg x)"/>
+    <arg name="y" value="$(arg y)"/>
+    <arg name="z" value="$(arg z)"/>
+    <arg name="roll" value="$(arg roll)"/>
+    <arg name="pitch" value="$(arg pitch)"/>
+    <arg name="yaw" value="$(arg yaw)"/>
+    <arg name="use_ned_frame" value="$(arg use_ned_frame)"/>
+    <arg name="namespace" value="$(arg namespace)"/>
+  </include>
+  
+  <node name="spawn_urdf_goal" pkg="gazebo_ros" type="spawn_model" output="screen"
+     args="-file $(find jelly_description)/jelly_urdf/pool.urdf -urdf -model goal" />
+  <!--
+  <node name="spawn_urdf_pool" pkg="gazebo_ros" type="spawn_model" output="screen"
+     args="-file $(find jelly_description)/jelly_urdf/goal.urdf -urdf -model goal" />
+     -->
+  <node name="stab_main" pkg="jelly_description" type="stab_main_stab.py"/>
+  <!--
+  <node name="record" pkg="rosbag" type="record"  output="screen" args="-o $(find jelly_description)/rosbag/ -a"/>
+  -->
+</launch>

@@ -1,0 +1,300 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!--                                                                      -->
+  <!-- MACRO FOR THRUSTER UNITS  -->
+  <!--                                                                      -->
+
+  <!-- Provide the propeller mesh in a separate file with the rotation axis
+  over propeller's frame X-axis in DAE (Collada) or STL format.
+  -->
+  <xacro:property name="prop_mesh_file" value="file://$(find jelly_description)/meshes/prop_mesh.STL"/>
+
+  <!--
+    Thruster macro with integration of joint and link. The thrusters should
+    be initialized in the actuators.xacro file.
+  -->
+  <xacro:macro name="thruster_macro" params="robot_namespace thruster_id *origin">
+
+    <!--
+    Dummy link as place holder for the thruster frame,
+    since thrusters can often be inside the collision geometry
+    of the vehicle and may cause internal collisions if set otherwise
+    -->
+    <link name="${robot_namespace}/thruster_${thruster_id}">
+
+      <visual>
+        <geometry>
+          <mesh filename="${prop_mesh_file}" scale="1 1 1" />
+        </geometry>
+      </visual>
+
+      <inertial>
+        <mass value="0.00907" />
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="3.2145E-06" ixy="2.3838E-11" ixz="-1.2572E-11"
+               iyy="2.2075E-06" iyz="2.0788E-10"
+               izz="2.2065E-06" />
+      </inertial>
+    </link>
+
+    <!-- Joint between thruster link and vehicle base link -->
+    <joint name="${robot_namespace}/thruster_${thruster_id}_joint" type="continuous">
+      <xacro:insert_block name="origin" />
+      <axis xyz="1 0 0" />
+      <parent link="${robot_namespace}/base_link" />
+      <child link="${robot_namespace}/thruster_${thruster_id}" />
+    </joint>
+
+    <gazebo>
+      <!-- Thruster ROS plugin -->
+      <plugin name="${robot_namespace}_${thruster_id}_thruster_model" filename="libuuv_thruster_ros_plugin.so">
+        <!-- Name of the thruster link -->
+        <linkName>${robot_namespace}/thruster_${thruster_id}</linkName>
+
+        <!-- Name of the joint between thruster and vehicle base link -->
+        <jointName>${robot_namespace}/thruster_${thruster_id}_joint</jointName>
+
+        <!-- Make the thruster aware of its id -->
+        <thrusterID>${thruster_id}</thrusterID>
+
+        <!-- Gain of the input command signal -->
+        <gain>1</gain>
+
+        <!-- Maximum allowed input value for the input signal for thruster unit -->
+        <clampMax>2000</clampMax>
+
+        <!-- Minimum allowed value for the input signal for thruster unit -->
+        <clampMin>1000</clampMin>
+
+        <!-- Minimum and maximum thrust force output allowed -->
+        <thrustMin>-60</thrustMin>
+        <thrustMax>60</thrustMax>
+
+        <!--
+        Value from 0 to 1 to set the efficiency of the output thrust force
+        Default value is 1.0
+        -->
+        <thrust_efficiency>1</thrust_efficiency>
+
+        <!--
+        Value from 0 to 1 to set the efficiency of the propeller as a factor
+        to be multiplied to the current value of the state variable at each
+        iteration.
+        Default value is 1.0
+        -->
+        <propeller_efficiency>1</propeller_efficiency>
+
+        <!--
+        Choose one of the propeller dynamics models below for your implementation
+        This will describe the dynamic model for the state variable of your thruster unit,
+        which can be, e.g., the angular velocity of the propeller.
+        -->
+
+        <!-- 1) Simple zero-order model -->
+        <dynamics>
+          <type>ZeroOrder</type>
+        </dynamics>
+        
+        
+
+        <!-- 2) First order model 
+        <dynamics>
+          <type>FirstOrder</type>
+          <timeConstant>0.2</timeConstant>
+        </dynamics>
+        -->
+
+        <!-- 3) Yoerger's nonlinear dynamic model
+        For information on the model description:
+        [1] D. R. Yoerger, J. G. Cooke, and J.-J. E. Slotine, "The influence of
+            thruster dynamics on underwater vehicle behavior and their incorporation
+            into control system design," IEEE Journal of Oceanic Engineering, vol. 15,
+            no. 3, pp. 167-178, Jul. 1990.
+             <dynamics>
+          <type>Yoerger</type>
+          <alpha>0.0</alpha>
+          <beta>0.0</beta>
+        </dynamics>
+        -->
+       
+
+        <!--4) Bessa's nonlinear dynamic model
+        For information on the model description:
+        [2] Bessa, Wallace Moreira, Max Suell Dutra, and Edwin Kreuzer. "Thruster
+            dynamics compensation for the positioning of underwater robotic vehicles
+            through a fuzzy sliding mode based approach." ABCM Symposium Series in
+            Mechatronics. Vol. 2. 2006.  
+
+        <dynamics>
+          <type>Bessa</type>
+          <Jmsp>0.0</Jmsp>
+          <Kv1>0.0</Kv1>
+          <Kv2>0.0</Kv2>
+          <Kt>0.0</Kt>
+          <Rm>0.0</Rm>
+        </dynamics>
+
+-->
+
+        <!--
+        Choose one of the model for the steady-state curve describing the
+        relationship between the state variable and the output thrust force
+        -->
+
+        <!-- 1) Basic curve
+        Input: x
+        Output: thrust
+        Function: thrust = rotorConstant * x * abs(x)
+        
+        <conversion>
+          <type>Basic</type>
+          <rotorConstant>0.0001</rotorConstant>
+        </conversion>
+        -->
+
+        <!-- 2) Dead-zone nonlinearity described in Bessa, 2006
+        Input: x
+        Output: thrust
+        Function:
+        thrust = rotorConstantL * (x * abs(x) - deltaL), if x * abs(x) <= deltaL
+        thrust = 0, if deltaL < x * abs(x) < deltaR
+        thrust = rotorConstantR * (x * abs(x) - deltaR), if x * abs(x) >= deltaL
+
+        <conversion>
+          <type>Bessa</type>
+          <rotorConstantL>0.0</rotorConstantL>
+          <rotorConstantR>0.0</rotorConstantR>
+          <deltaL>0.0</deltaL>
+          <deltaR>0.0</deltaR>
+        </conversion>
+        -->
+        <!-- 3) Linear interpolation
+        If you have access to the thruster's data sheet, for example,
+        you can enter samples of the curve's input and output values
+        and the thruster output will be found through linear interpolation
+        of the given samples.
+        -->
+        <conversion>
+          <type>LinearInterp</type>
+          <inputValues>1100 1104 1108 1112 1116 1120 1124 1128 1132 1136 1140 1144 1148 1152 1156 1160 1164 1168 1172 1176 1180 1184 1188 1192 1196 1200 1204 1208 1212 1216 1220 1224 1228 1232 1236 1240 1244 1248 1252 1256 1260 1264 1268 1272 1276 1280 1284 1288 1292 1296 1300 1304 1308 1312 1316 1320 1324 1328 1332 1336 1340 1344 1348 1352 1356 1360 1364 1368 1372 1376 1380 1384 1388 1392 1396 1400 1404 1408 1412 1416 1420 1424 1428 1432 1436 1440 1444 1448 1452 1456 1460 1464 1468 1472 1476 1480 1484 1488 1492 1496 1500 1504 1508 1512 1516 1520 1524 1528 1532 1536 1540 1544 1548 1552 1556 1560 1564 1568 1572 1576 1580 1584 1588 1592 1596 1600 1604 1608 1612 1616 1620 1624 1628 1632 1636 1640 1644 1648 1652 1656 1660 1664 1668 1672 1676 1680 1684 1688 1692 1696 1700 1704 1708 1712 1716 1720 1724 1728 1732 1736 1740 1744 1748 1752 1756 1760 1764 1768 1772 1776 1780 1784 1788 1792 1796 1800 1804 1808 1812 1816 1820 1824 1828 1832 1836 1840 1844 1848 1852 1856 1860 1864 1868 1872 1876 1880 1884 1888 1892 1896 1900</inputValues>
+          <outputValues>-39.92156178 -39.73615605 -39.4691718 -38.89070592 -38.26774267 -37.95626105 -37.51128729 -37.28880042 -36.79932929 -36.44335029 -35.86488441 -35.19742378 -34.52996316 -33.86250253 -33.32853402 -32.4830839 -31.90461802 -31.41514689 -30.48070201 -29.81324138 -29.36826763 -28.83429913 -28.07784375 -27.67736737 -27.18789625 -26.56493299 -26.07546187 -25.31900649 -25.00752486 -24.60704849 -24.07307998 -23.36112198 -23.09413773 -22.33768235 -21.93720597 -21.5367296 -20.78027422 -20.42429522 -19.84582934 -19.40085559 -19.04487659 -18.24392383 -17.79895008 -17.30947895 -16.6865157 -16.37503407 -15.7965682 -15.26259969 -14.86212332 -14.59513907 -14.10566794 -13.70519156 -13.21572043 -12.77074668 -12.32577293 -11.79180443 -11.39132805 -10.99085167 -10.81286217 -10.32339105 -10.01190942 -9.611433043 -9.255454042 -8.854977665 -8.543496038 -8.054024911 -7.69804591 -7.297569533 -7.030585282 -6.67460628 -6.363124654 -6.051643027 -5.695664026 -5.295187649 -5.028203398 -4.716721771 -4.36074277 -4.093758518 -3.782276892 -3.470795266 -3.159313639 -2.892329388 -2.536350386 -2.31386351 -2.046879259 -1.779895008 -1.468413382 -1.245926506 -1.02343963 -0.845450129 -0.667460628 -0.489471127 -0.355979002 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.400476377 0.533968502 0.756455378 0.978942254 1.245926506 1.512910757 1.779895008 2.13587401 2.447355636 2.847832013 3.159313639 3.515292641 3.915769018 4.271748019 4.627727021 5.028203398 5.47317715 5.918150902 6.274129903 6.67460628 7.075082657 7.609051159 8.009527536 8.543496038 8.89947504 9.299951417 9.744925169 10.14540155 10.7683648 11.21333855 11.61381493 12.14778343 12.54825981 13.03773093 13.61619681 14.10566794 14.55064169 15.08461019 15.57408132 16.19704457 16.59752095 17.26498158 17.88794483 18.42191333 18.95588184 19.53434771 20.06831622 20.82477159 21.3587401 21.75921647 22.33768235 23.36112198 23.85059311 24.69604324 25.27450911 26.03096449 26.78741987 27.05440412 27.85535688 28.344828 29.19027813 29.94673351 30.48070201 31.10366526 31.54863902 32.39408915 33.10604715 33.5510209 34.4409684 35.37541328 36.13186866 36.66583716 37.46678992 38.13425055 38.80171117 39.8251508 40.67060093 41.73853794 42.22800906 42.98446444 44.23039095 44.40838045 45.60980958 46.18827546 46.94473084 47.43420196 48.36864684 49.1695996 49.79256285 50.46002348 50.7715051 51.21647886 51.45379819</outputValues>
+        </conversion>
+        
+      </plugin>
+    </gazebo>
+
+    <gazebo reference="${robot_namespace}/thruster_${thruster_id}">
+      <selfCollide>false</selfCollide>
+    </gazebo>
+  </xacro:macro>
+
+
+  <!--                                                                      -->
+  <!-- MACRO FOR FIN/RUDDER UNITS  -->
+  <!--                                                                      -->
+
+  <!--
+    This macro can be used to add fins to the body of the vehicle, the fins
+    should be initialized in the actuators.xacro file. If you vehicle has no
+    fins, you can erase the macro below.
+  -->
+
+  <!-- A separate mesh for the fin should be stored in the meshes folder -->
+  <xacro:property name="fin_mesh_file" value="file://$(find jelly_description)/meshes/fin.dae"/>
+
+  <!-- Fin joint limits  -->
+  <xacro:property name="fin_min_joint_limit" value="${0.0 * d2r}"/>
+  <xacro:property name="fin_max_joint_limit" value="${0.0 * d2r}"/>
+
+  <xacro:macro name="fin_macro" params="namespace fin_id *origin">
+      <joint name="${namespace}/fin${fin_id}_joint" type="revolute">
+          <limit effort="0" lower="${fin_min_joint_limit}" upper="${fin_max_joint_limit}" velocity="0"/>
+          <xacro:insert_block name="origin"/>
+          <axis xyz="0 0 1"/>
+          <parent link="${namespace}/base_link" />
+          <child link="${namespace}/fin${fin_id}" />
+      </joint>
+
+      <link name="${namespace}/fin${fin_id}">
+        <inertial>
+          <mass value="0.001" />
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <inertia ixx="0.000000017" ixy="0.0" ixz="0.0"
+                 iyy="0.000000017" iyz="0.0"
+                 izz="0.000000017" />
+        </inertial>
+        <visual>
+          <origin xyz="0 0 0" rpy="0 0 0" />
+          <geometry>
+            <mesh filename="${fin_mesh_file}" scale="1 1 1"/>
+          </geometry>
+        </visual>
+      </link>
+
+      <gazebo>
+        <plugin name="${namespace}_fin${fin_id}_model" filename="libuuv_fin_ros_plugin.so">
+
+          <!--
+            First order dynamics model for the fin joint dynamics,
+            replace an appropriate time constant
+          -->
+          <dynamics>
+            <type>FirstOrder</type>
+            <timeConstant>0.0</timeConstant>
+          </dynamics>
+
+          <!--
+            Definition of the lift and drag model, choose ONE of the models
+            below according to the model you want to use.
+          -->
+
+          <!--
+            1) References for the two line lift and drag model:
+              [1] https://en.wikipedia.org/wiki/Lift_coefficient
+              [2] http://gazebosim.org/tutorials?tut=aerodynamics&cat=plugins
+          -->
+          <liftdrag>
+            <type>TwoLines</type>
+            <area>${replace here the value for the area of the fin's cross section}</area>
+            <fluid_density>0.0</fluid_density>
+            <a0>0.0</a0>
+            <alpha_stall>0.0</alpha_stall>
+            <cla>0.0</cla><!-- ^= 0.244 when using deg -->
+            <cla_stall>0.0</cla_stall>
+            <cda>0.0</cda>
+            <cda_stall>0.0</cda_stall>
+          </liftdrag>
+
+          <!--
+            2) Reference for the quadratic lift and drag model:
+              [1] Engelhardtsen, Oystein. 3D AUV Collision Avoidance.
+                  MS thesis. Institutt for teknisk kybernetikk, 2007.
+                  https://brage.bibsys.no/xmlui/handle/11250/259834
+          -->
+          <liftdrag>
+            <type>Quadratic</type>
+            <lift_constant>0.0</lift_constant>
+            <drag_constant>0.0</drag_constant>
+          </liftdrag>
+
+          <!--
+            Further parameters necessary for the lift and drag plugin
+          -->
+
+          <!-- Current velocity topic -->
+          <current_velocity_topic>/hydrodynamics/current_velocity</current_velocity_topic>
+
+          <!-- Name of the correspodent fin link and joint  -->
+          <link_name>${namespace}/fin${fin_id}</link_name>
+          <joint_name>${namespace}/fin${fin_id}_joint</joint_name>
+
+          <!-- Output topic to publish the current angle of the fin joint -->
+          <output_topic>${namespace}/fins/${fin_id}/output</output_topic>
+          <input_topic>${namespace}/fins/${fin_id}/input</input_topic>
+          <wrench_topic>${namespace}/fins/${fin_id}/wrench_topic</wrench_topic>
+        </plugin>
+      </gazebo>
+  </xacro:macro>
+
+</robot>

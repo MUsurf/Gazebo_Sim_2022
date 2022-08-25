@@ -1,0 +1,20 @@
+Post-Comp Software Notes:
+
+jelly.launch currently works and stabilizes in Gazebo.
+jelly_start_stab.launch and custom_ ... _stab.py files are the most recent files.
+
+I want to sort through all scripts into just a few that stabilize, allocate, and a main function.
+
+scripts/stabilization_hardware was preparation code for uploading to Jelly.
+
+custom_controller.py Is the most recent simulation controller.
+
+custom_thrust_allocator.py is the most recent simulation controller.
+
+Every time I create a new script/script copy I should create a note detailing what the point is...
+
+custom_trajectory_planner.py is used for trajectory testing in simulation
+
+the trajectory folder inside scripts was used for setting up trajectory plotting/following on hardware. The plan was to upload that code to jelly for gate detection/following.
+
+Build off of stab_main_stab.py

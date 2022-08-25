@@ -1,0 +1,32 @@
+<launch>
+    <!-- If you want to generate a ROS bag with the recorded simulated data, set this flag to true -->
+    <arg name="record" default="false"/>
+
+    <!-- Start the a underwater world simulation scenario -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="worlds/ocean_waves.world"/>
+        <arg name="paused" value="false"/>
+    </include>
+
+    <!-- Add the RexROV vehicle to the simulation (namespace: rexrov) -->
+    <include file="$(find jelly_description)/launch/upload3.launch">
+        <arg name="x" default="20"/>
+        <arg name="y" default="0"/>
+        <arg name="z" default="-20"/>
+        <arg name="yaw" default="0"/>
+    </include>
+
+    <!-- Start the controller -->
+    <include file="$(find uuv_tutorial_dp_controller)/launch/start_tutorial_dp_controller.launch">
+        <arg name="uuv_name" value="jelly"/>
+        <arg name="model_name" value="jelly"/>
+    </include>
+
+    <!-- Start the recording node  -->
+    <include file="$(find uuv_gazebo)/launch/controller_demos/record_demo.launch">
+      <arg name="record" value="$(arg record)"/>
+    </include>
+
+    <!-- Open RViz for visualization of sensor data and visualization markers -->
+    <node name="rviz" pkg="rviz" type="rviz" output="screen" args="-d $(find jelly_description)/rviz/controller_demo.rviz"/>
+</launch>
