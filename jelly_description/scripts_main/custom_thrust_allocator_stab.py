@@ -14,6 +14,10 @@ from uuv_gazebo_ros_plugins_msgs.msg import FloatStamped
 from std_msgs.msg import Int8
 # END MSGS
 
+# BEGIN SRV IMPORT
+from std_srvs.srv import SetBool,SetBoolResponse
+# END SRV IMPORT
+
 # BEGIN SETUP
 rospy.init_node("custom_thrust_allocator_stab")
 rate = rospy.Rate(50)
@@ -39,6 +43,15 @@ class ThrustAllocator():
         
         self.quaternion_subscriber = rospy.Subscriber('/jelly/imu', Imu, self.input_quaternion_orientation)
         self.wrench_subscriber = rospy.Subscriber('/jelly/controller/command_wrench', WrenchStamped, self.input_wrench)
+        self.allocator_state = False
+        self.set_bool_service = rospy.Service('set_allocator_state',SetBool,self.allocator_state_callback)
+
+    def allocator_state_callback(self,data):
+        a = SetBoolResponse()
+        a.message = "Receive successful, request received was: " + str(data.data)
+        self.allocator_state = data.data
+        print("Controller state has been changed to: " + str(self.allocator_state))
+        return a
 
     def input_quaternion_orientation(self, msg):
         self.DCM = numpy.zeros((3,3))
@@ -85,13 +98,22 @@ class ThrustAllocator():
         self.message = FloatStamped()
         self.message.header.seq = 10
         self.message.header.stamp = rospy.Time()
-        for j in range(0,8):
-            self._data[j] = self.get_input_value(self.thruster_forces[j])
-        #print(self._data)
-        for k in range(len(self.thruster_forces)):
-            self._frame_id = self.topic_names[k]
-            self.message.data = self._data[k]
-            self.publishers[k].publish(self.message)
+        print("Current allocator state is: " + str(self.allocator_state))
+        # A better way to do this would be to set thruster forces to zero instead of just the output. Then the code would be resilient to center value changes.
+        if self.allocator_state == True: #Occurs if allocator state is "on/True"
+            for j in range(0,8):
+                self._data[j] = self.get_input_value(self.thruster_forces[j])
+            #print(self._data)
+            for k in range(len(self.thruster_forces)):
+                self._frame_id = self.topic_names[k]
+                self.message.data = self._data[k]
+                self.publishers[k].publish(self.message)
+        elif self.allocator_state == False: # Occurs if allocator state is "off/False"
+            self.thruster_forces = [0,0,0,0,0,0,0,0]
+            for k in range(len(self.thruster_forces)):
+                self._frame_id = self.topic_names[k]
+                self.message.data = self._data[k]
+                self.publishers[k].publish(self.message)
 
     def round_thruster_forces(self,forces):
         # This function, called by publish_thruster_forces, ensures that the resulting force vector is always in the direction intended by the controller.

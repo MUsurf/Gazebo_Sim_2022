@@ -40,6 +40,7 @@
   <node name="custom_controller_stab" pkg="jelly_description" type="custom_controller_stab.py"/>
 
   <node name="custom_thrust_allocator_stab" pkg="jelly_description" type="custom_thrust_allocator_stab.py"/>
+  
   <!--
   <node name="record" pkg="rosbag" type="record"  output="screen" args="-o $(find jelly_description)/rosbag/ -a"/>
   -->
