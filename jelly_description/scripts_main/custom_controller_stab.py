@@ -52,9 +52,9 @@ class AttitudeController():
         self.quaternion_subscriber = rospy.Subscriber('/jelly/imu', Imu, self.input_quaternion_orientation)
         
         # Define turn controller on function.
-        self.set_bool_service = rospy.Service('set_controller_state',SetBool,self.our_personal_callback_function)
+        self.set_bool_service = rospy.Service('set_controller_state',SetBool,self.controller_state_callback)
 
-    def our_personal_callback_function(self,data):
+    def controller_state_callback(self,data):
         a = SetBoolResponse()
         a.message = "Receive successful, request received was: " + str(data.data)
         self.controller_state = data.data

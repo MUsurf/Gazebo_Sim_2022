@@ -25,14 +25,22 @@ rate = rospy.Rate(50)
 # The main function will be the service client. We want our first service to turn the controller on and off, for example.
 # Another service will allow us to give an input pose and have that sent to the controller.
 # A third service will allow a heading mode and will convert the input heading to a set of quaternion inputs.
-print("Waiting for service")
+print("Waiting for controller service")
 rospy.wait_for_service('set_controller_state')
+print("Waiting for allocator service")
+rospy.wait_for_service('set_allocator_state')
+
 try:
-    set_bool = rospy.ServiceProxy('set_controller_state',SetBool)
-    response_1 = set_bool(True)
+    controller_on_off = rospy.ServiceProxy('set_controller_state',SetBool)
+    response_1 = controller_on_off(True)
 except rospy.ServiceException as e:
     print("Service call failed.")
 
+try:
+    allocator_on_off = rospy.ServiceProxy('set_allocator_state',SetBool)
+    allocator_on_off(True) # Test of calling without intersecting message.
+except rospy.ServiceException as e:
+    print("Service call failed.")
 # time.sleep(1)
 # try:
 #     response_2 = set_bool(False)
@@ -40,4 +48,4 @@ except rospy.ServiceException as e:
 #     print("Service call failed.")
 
 print(response_1)
-# print(response_2)
+#print(response_2)
