@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+# Change
 # BEGIN IMPORT
 from cmath import sqrt
 import numpy
@@ -37,23 +37,8 @@ class ThrustAllocator():
             self.publishers[i] = rospy.Publisher(self.topic_names[i], FloatStamped, queue_size=10)
             print(self.publishers[i])
         
-        self.flag_subscriber = rospy.Subscriber("/jelly/main_flag",Int8,self.import_flag)
         self.quaternion_subscriber = rospy.Subscriber('/jelly/imu', Imu, self.input_quaternion_orientation)
-        self.main_wrench_subscriber = rospy.Subscriber('/jelly/main/command_wrench', WrenchStamped,self.input_main_wrench)
         self.wrench_subscriber = rospy.Subscriber('/jelly/controller/command_wrench', WrenchStamped, self.input_wrench)
-
-    def input_main_wrench(self,msg):
-        if self.flag == 0:
-            self.input_wrench(msg)
-
-    def input_real_wrench(self,msg):
-        if self.flag == 1:
-            self.input_wrench(msg)
-
-    def import_flag(self,msg):
-        #print("Flag")
-        self.flag = msg.data
-        #print(self.flag)
 
     def input_quaternion_orientation(self, msg):
         self.DCM = numpy.zeros((3,3))

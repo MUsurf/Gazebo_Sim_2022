@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-# HERE IS A TEST COMMENT
+
 # BEGIN IMPORT
-import queue
 import rospy
 import numpy
+import numpy as np
 # END IMPORT
 
 # BEGIN STD_MSGS
@@ -14,6 +14,10 @@ from std_msgs.msg import Float32
 from geometry_msgs.msg import Pose
 from std_msgs.msg import Int8
 # END STD_MSGS
+
+# BEGIN SRV IMPORT
+from std_srvs.srv import SetBool,SetBoolResponse
+# END SRV IMPORT
 
 # BEGIN SETUP
 rospy.init_node("custom_controller_stab")
@@ -34,40 +38,28 @@ class AttitudeController():
         self.q_proportional = 5
         self.omega_proportional = 2
         # Desired position
-        self.reference_position = numpy.array([[0.0],[0.0],[-2.3]])
+        #self.reference_position = numpy.array([[0.0],[0.0],[-5]]) Defined in int_diff_eqs
         # Desired attitude (can be changed to take quaternion inputs from trajectory at later date.) w, x, y, z
         self.reference_attitude = numpy.array([[1.0],[0.0],[0.0],[0.0]])#numpy.array([[0.7071068],[0.0],[0.7071068],[0]])#numpy.array([[0.9659258],[0.0],[-0.258819],[0.0]])#
         # Initialize position controller difference equations
         self.int_diff_eqs()
         # Define publisher and subscriber objects.
-        self.flag_subscriber = rospy.Subscriber("/jelly/main_flag",Int8,self.import_flag)
+        #self.flag_subscriber = rospy.Subscriber("/jelly/main_flag",Int8,self.import_flag)
         self.wrench_publisher = rospy.Publisher("/jelly/controller/command_wrench",WrenchStamped, queue_size=1)
         # self.command_publisher = rospy.Publisher("/jelly/commandZ", Float32, queue_size=10)
         self.desired_position_subscriber = rospy.Subscriber("/jelly/command_pose", Pose, self.input_command)
-        self.main_pose_subscriber = rospy.Subscriber("/jelly/main/pose_gt", Odometry, self.input_main_pose)
-        self.pose_subscriber = rospy.Subscriber("/jelly/pose_gt", Odometry, self.input_real_pose)
-        self.main_quaternion_subscriber = rospy.Subscriber("/jelly/main/orientation",Imu,self.input_main_quaternion_orientation)
+        self.pose_subscriber = rospy.Subscriber("/jelly/pose_gt", Odometry, self.input_position)
         self.quaternion_subscriber = rospy.Subscriber('/jelly/imu', Imu, self.input_quaternion_orientation)
+        
+        # Define turn controller on function.
+        self.set_bool_service = rospy.Service('set_controller_state',SetBool,self.our_personal_callback_function)
 
-    def input_main_pose(self,msg):
-        if self.flag == 0:
-            self.input_position(msg)
-    
-    def input_real_pose(self,msg):
-        if self.flag == 1:
-            self.input_position(msg)
-
-    def input_main_quaternion_orientation(self,msg):
-        if self.flag == 0:
-            self.input_quaternion_orientation(msg)
-
-    def input_real_quaternion_orientation(self,msg):
-        if self.flag == 1:
-            self.input_quaternion_orientation(msg)
-
-    def import_flag(self,msg):
-        print("Flag")
-        self.flag = msg.data
+    def our_personal_callback_function(self,data):
+        a = SetBoolResponse()
+        a.message = "Receive successful, request received was: " + str(data.data)
+        self.controller_state = data.data
+        print("Controller state has been changed to: " + str(self.controller_state))
+        return a
     
     def input_command(self,msg1):
         try:
@@ -102,12 +94,13 @@ class AttitudeController():
         self.error_pos = numpy.array([[0.0],[0.0],[0.0]])
         self.error_pos_1 = numpy.array([[0.0],[0.0],[0.0]])
         self.error_pos_2 = numpy.array([[0.0],[0.0],[0.0]])
-        self.reference_position = numpy.array([[0.0],[0.0],[0.0]])
+        self.reference_position = numpy.array([[0.0],[0.0],[-10.0]])
         self.reference_attitude = numpy.array([[1.0],[0.0],[0.0],[0.0]])
         self.quaternion_vector = numpy.array([[1.0],[0.0],[0.0],[0.0]])
         self.angular_velocity_vector = numpy.array([[0.0],[0.0],[0.0]])
         self.current_position = numpy.array([[0.0],[0.0],[0.0]])
         self.error_att = numpy.array([[0.0],[0.0],[0.0]])
+        self.controller_state = False
         print("int_diff_eqs")
 
     def calculate_error_quaternion(self):
@@ -122,17 +115,17 @@ class AttitudeController():
         # print("calculate_error_quaternion")
 
     def input_position(self,msg):
-        print("Input Pos: ")
+        #print("Input Pos: ")
         self.current_position[0,0] = msg.pose.pose.position.x
         self.current_position[1,0] = msg.pose.pose.position.y
         self.current_position[2,0] = float(msg.pose.pose.position.z)
-        print(self.current_position)
+        #print(self.current_position)
         
         # print("input_position")
 
     def input_quaternion_orientation(self, msg2):
         # Put vectors into numpy array for further processing.
-        print("Input Orien: ")
+        #print("Input Orien: ")
         self.quaternion_vector[0,0] = msg2.orientation.w
         self.quaternion_vector[1,0] = msg2.orientation.x
         self.quaternion_vector[2,0] = msg2.orientation.y
@@ -141,26 +134,32 @@ class AttitudeController():
         self.angular_velocity_vector[0,0] = msg2.angular_velocity.x
         self.angular_velocity_vector[1,0] = msg2.angular_velocity.y
         self.angular_velocity_vector[2,0] = msg2.angular_velocity.z
-        print(self.quaternion_vector)
+        #print(self.quaternion_vector)
 
     def calculate_error_position(self):
         self.error_pos = self.reference_position - self.current_position
 
     def difference_eq(self):
-        #print("diff eq")
-        self.calculate_error_position()
-        #print(self.error_pos)
-        self.command_force = (self.diff_eq_coeff[0] * self.error_pos) + (self.diff_eq_coeff[1] * self.error_pos_1) + (self.diff_eq_coeff[2] * self.error_pos_2) - (self.diff_eq_coeff[3] * self.command_force_1) - (self.diff_eq_coeff[4] * self.command_force_2)
-        self.error_pos_2 = self.error_pos_1
-        self.error_pos_1 = self.error_pos
-        self.command_force_2 = self.command_force_1
-        self.command_force_1 = self.command_force
-        self.calculate_error_quaternion()
-        # Apply control law.
-        self.command_torque = (-1 * self.q_proportional * self.error_att) + (-1 * self.omega_proportional * self.angular_velocity_vector)
-        #print(self.command_torque)
-        self.publish_wrench()
-        # print("input_quaternion_orientation")
+        print("Current controller state is: " + str(self.controller_state))
+        if self.controller_state == True:
+            #print("diff eq")
+            self.calculate_error_position()
+            #print(self.error_pos)
+            self.command_force = (self.diff_eq_coeff[0] * self.error_pos) + (self.diff_eq_coeff[1] * self.error_pos_1) + (self.diff_eq_coeff[2] * self.error_pos_2) - (self.diff_eq_coeff[3] * self.command_force_1) - (self.diff_eq_coeff[4] * self.command_force_2)
+            self.error_pos_2 = self.error_pos_1
+            self.error_pos_1 = self.error_pos
+            self.command_force_2 = self.command_force_1
+            self.command_force_1 = self.command_force
+            self.calculate_error_quaternion()
+            # Apply control law.
+            self.command_torque = (-1 * self.q_proportional * self.error_att) + (-1 * self.omega_proportional * self.angular_velocity_vector)
+            #print(self.command_torque)
+            self.publish_wrench()
+            # print("input_quaternion_orientation")
+        elif self.controller_state == False:
+            self.command_force = numpy.array([[0.0],[0.0],[0.0]])
+            self.command_torque = numpy.array([[0.0],[0.0],[0.0]])
+            self.publish_wrench()
 
     def publish_wrench(self):
         # print("publish_wrench_begin")

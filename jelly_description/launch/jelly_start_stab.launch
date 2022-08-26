@@ -3,7 +3,7 @@
 
   <arg name="x" default="0"/>
   <arg name="y" default="0"/>
-  <arg name="z" default="-0.15"/>
+  <arg name="z" default="-1"/> <!--Use -0.15 m for floating on top of water.-->
   <arg name="roll" default="0.0"/>
   <arg name="pitch" default="0.0"/>
   <arg name="yaw" default="0.0"/>
@@ -33,8 +33,13 @@
   <!--
   <node name="spawn_urdf_pool" pkg="gazebo_ros" type="spawn_model" output="screen"
      args="-file $(find jelly_description)/jelly_urdf/goal.urdf -urdf -model goal" />
-     -->
+
   <node name="stab_main" pkg="jelly_description" type="stab_main_stab.py"/>
+ -->
+ 
+  <node name="custom_controller_stab" pkg="jelly_description" type="custom_controller_stab.py"/>
+
+  <node name="custom_thrust_allocator_stab" pkg="jelly_description" type="custom_thrust_allocator_stab.py"/>
   <!--
   <node name="record" pkg="rosbag" type="record"  output="screen" args="-o $(find jelly_description)/rosbag/ -a"/>
   -->
