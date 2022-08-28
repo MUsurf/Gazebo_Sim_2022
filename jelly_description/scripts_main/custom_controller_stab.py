@@ -17,6 +17,8 @@ from std_msgs.msg import Int8
 
 # BEGIN SRV IMPORT
 from std_srvs.srv import SetBool,SetBoolResponse
+from jelly_description.srv import numpyArray
+from jelly_description.srv import numpyArrayResponse
 # END SRV IMPORT
 
 # BEGIN SETUP
@@ -53,6 +55,14 @@ class AttitudeController():
         
         # Define turn controller on function.
         self.set_bool_service = rospy.Service('set_controller_state',SetBool,self.controller_state_callback)
+        self.command_pos_service = rospy.Service('set_command_position',numpyArray,self.command_position_callback)
+
+    def command_position_callback(self,data):
+        self.reference_position = np.array([[data.data[0]],[data.data[1]],[data.data[2]]])
+        a = numpyArrayResponse()
+        a.message = "Receive successful, request received was: " + str(data.data)
+        print("Command position has been changed to: " + str(self.controller_state))
+        return a
 
     def controller_state_callback(self,data):
         a = SetBoolResponse()
@@ -140,7 +150,7 @@ class AttitudeController():
         self.error_pos = self.reference_position - self.current_position
 
     def difference_eq(self):
-        print("Current controller state is: " + str(self.controller_state))
+        #print("Current controller state is: " + str(self.controller_state))
         if self.controller_state == True:
             #print("diff eq")
             self.calculate_error_position()

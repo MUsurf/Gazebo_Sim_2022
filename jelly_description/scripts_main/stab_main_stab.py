@@ -6,6 +6,7 @@ import roslaunch
 # END IMPORT
 
 # BEGIN STD_MSGS
+import numpy
 from geometry_msgs.msg import WrenchStamped
 from sensor_msgs.msg import Imu
 from nav_msgs.msg import Odometry
@@ -13,10 +14,12 @@ from geometry_msgs.msg import Pose
 from std_msgs.msg import Int8
 import roslaunch
 import time
+from std_msgs.msg import Float64MultiArray
 # END STD_MSGS
 
 # BEGIN SRV IMPORT
 from std_srvs.srv import SetBool
+from jelly_description.srv import numpyArray
 # END SRV IMPORT
 
 rospy.init_node("stab_main")
@@ -29,6 +32,8 @@ print("Waiting for controller service")
 rospy.wait_for_service('set_controller_state')
 print("Waiting for allocator service")
 rospy.wait_for_service('set_allocator_state')
+print("Waiting for command position service")
+rospy.wait_for_service('set_command_position')
 
 try:
     controller_on_off = rospy.ServiceProxy('set_controller_state',SetBool)
@@ -41,11 +46,15 @@ try:
     allocator_on_off(True) # Test of calling without intersecting message.
 except rospy.ServiceException as e:
     print("Service call failed.")
-# time.sleep(1)
-# try:
-#     response_2 = set_bool(False)
-# except rospy.ServiceException as e:
-#     print("Service call failed.")
 
-print(response_1)
+time.sleep(15) # For testing purposes: this need not be here in actual use.
+
+try:
+    command_position_serv_prox = rospy.ServiceProxy('set_command_position',numpyArray)
+    command_position_numpy_array = numpy.array([[1.0],[1.0],[-5.0]])
+    response = command_position_serv_prox([command_position_numpy_array[0,0],command_position_numpy_array[1,0],command_position_numpy_array[2,0]])
+except rospy.ServiceException as e:
+    print("Service call failed.")
+
+print(response)
 #print(response_2)
