@@ -11,16 +11,21 @@ sudo apt-get install protobuf-compiler protobuf-c-compiler
 
 Source the necessary packages:
 
-source /usr/share/gazebo-7/setup.sh
-source /opt/ros/kinetic/setup.bash
+source /usr/share/gazebo-11/setup.sh
+source /opt/ros/noetic/setup.bash
 source $HOME/catkin_ws/devel/setup.bash
 
 source ~/.bashrc
 
 cd ~/catkin_ws
-rosdep install --from-paths src –ignore-src --rosdistro=noetic -y --skip-keys "gazebo gazebo_msgs gazebo_plugins gazebo_ros gazebo_ros_control gazebo_ros_pkgs"
+rosdep install --from-paths src --ignore-src --rosdistro=noetic -y --skip-keys "gazebo gazebo_msgs gazebo_plugins gazebo_ros gazebo_ros_control gazebo_ros_pkgs"
 
 So long as you do not see any errors, the installation should be complete!
+
+Build your workspace with:
+
+catkin_make install
+catkin_make -j1
 
 To test the installation of Gazebo simulation code, run the following command:
 
