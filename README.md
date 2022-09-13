@@ -18,6 +18,7 @@ source $HOME/catkin_ws/devel/setup.bash
 source ~/.bashrc
 
 cd ~/catkin_ws
+
 rosdep install --from-paths src --ignore-src --rosdistro=noetic -y --skip-keys "gazebo gazebo_msgs gazebo_plugins gazebo_ros gazebo_ros_control gazebo_ros_pkgs"
 
 So long as you do not see any errors, the installation should be complete!
