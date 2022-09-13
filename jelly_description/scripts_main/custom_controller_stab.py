@@ -53,9 +53,17 @@ class AttitudeController():
         self.pose_subscriber = rospy.Subscriber("/jelly/pose_gt", Odometry, self.input_position)
         self.quaternion_subscriber = rospy.Subscriber('/jelly/imu', Imu, self.input_quaternion_orientation)
         
-        # Define turn controller on function.
+        # Define controller on/off behavior:
         self.set_bool_service = rospy.Service('set_controller_state',SetBool,self.controller_state_callback)
+        # Define command position control:
         self.command_pos_service = rospy.Service('set_command_position',numpyArray,self.command_position_callback)
+        # Define attitude gains change service:
+        self.attitude_gains_service = rospy.Service('set_attitude_gains',numpyArray,self.attitude_gains_callback)
+        self
+
+    def attitude_gains_callback(self,data):
+        self.q_proportional = data.data[0]
+        self.omega_proportional = data.data[1]
 
     def command_position_callback(self,data):
         self.reference_position = np.array([[data.data[0]],[data.data[1]],[data.data[2]]])
