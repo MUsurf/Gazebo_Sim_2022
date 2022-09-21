@@ -34,6 +34,10 @@ print("Waiting for allocator service")
 rospy.wait_for_service('set_allocator_state')
 print("Waiting for command position service")
 rospy.wait_for_service('set_command_position')
+print("Waiting for attitude gain service.")
+rospy.wait_for_service('set_attitude_gains')
+print("Waiting for position gain service.")
+rospy.wait_for_service('set_position_gains')
 
 try:
     controller_on_off = rospy.ServiceProxy('set_controller_state',SetBool)
@@ -55,6 +59,20 @@ try:
     response = command_position_serv_prox([command_position_numpy_array[0,0],command_position_numpy_array[1,0],command_position_numpy_array[2,0]])
 except rospy.ServiceException as e:
     print("Service call failed.")
+
+try:
+    attitude_gain_serv_prox = rospy.ServiceProxy('set_attitude_gains',numpyArray)
+    new_attitude_gains = numpy.array([[-505.5],[100.5]]) # These gains are unstable but useful for testing.
+    attitude_gain_serv_prox([new_attitude_gains[0,0],new_attitude_gains[1,0]])
+except rospy.ServiceException as e:
+    print("Att gain service call failed.")
+
+try:
+    position_gain_serv_prox = rospy.ServiceProxy('set_position_gains',numpyArray)
+    new_position_gains = numpy.array([[25.5],[4000],[42],[44]]) # P, I, D, N These gains are unstable but useful for testing.
+    response_gain_1 = position_gain_serv_prox([new_position_gains[0,0],new_position_gains[1,0],new_position_gains[2,0],new_position_gains[3,0]])
+except rospy.ServiceException as e:
+    print("Pos gain service call failed.")
 
 print(response)
 #print(response_2)
