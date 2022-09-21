@@ -19,7 +19,7 @@ source ~/.bashrc
 
 cd ~/catkin_ws
 
-Next, you can move all folders from the created Gazebo_Sim_2022 into the src folder if needed (attempt install witout moving files first, but I found it necessary to move them).
+Next, you you will have to move all folders from the created Gazebo_Sim_2022 into the src folder.
 
 Install the appropriate scipy/rosdep packages:
 
