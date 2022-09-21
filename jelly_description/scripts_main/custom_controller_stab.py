@@ -59,11 +59,35 @@ class AttitudeController():
         self.command_pos_service = rospy.Service('set_command_position',numpyArray,self.command_position_callback)
         # Define attitude gains change service:
         self.attitude_gains_service = rospy.Service('set_attitude_gains',numpyArray,self.attitude_gains_callback)
-        self
+        self.position_gains_service = rospy.Service('set_position_gains',numpyArray,self.position_gains_callback)
 
     def attitude_gains_callback(self,data):
+        a = numpyArrayResponse()
         self.q_proportional = data.data[0]
         self.omega_proportional = data.data[1]
+        print("New proportional gain is: ")
+        print(self.q_proportional)
+        print("New velocity gain is: ")
+        print(self.omega_proportional)
+        a.message = "Receive successful, request received was: " + str(data.data)
+        return a
+
+    def position_gains_callback(self,data):
+        a = numpyArrayResponse()
+        self.pos_proportional = data.data[0]
+        self.pos_integral = data.data[1]
+        self.pos_derivative = data.data[2]
+        self.pos_filter = data.data[3]
+        print("New proportional gain is: ")
+        print(self.pos_proportional)
+        print("New integral gain is: ")
+        print(self.pos_integral)
+        print("New derivative gain is: ")
+        print(self.pos_derivative)
+        print("New filter gain is: ")
+        print(self.pos_filter)
+        a.message = "Receive successful, request received was: " + str(data.data)
+        return a
 
     def command_position_callback(self,data):
         self.reference_position = np.array([[data.data[0]],[data.data[1]],[data.data[2]]])
