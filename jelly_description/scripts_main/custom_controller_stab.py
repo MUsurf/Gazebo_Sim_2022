@@ -4,6 +4,8 @@
 import rospy
 import numpy
 import numpy as np
+from math import sqrt
+import math
 # END IMPORT
 
 # BEGIN STD_MSGS
@@ -57,6 +59,9 @@ class AttitudeController():
         self.set_bool_service = rospy.Service('set_controller_state',SetBool,self.controller_state_callback)
         # Define command position control:
         self.command_pos_service = rospy.Service('set_command_position',numpyArray,self.command_position_callback)
+        # Define command attitude control:
+        self.command_att_service = rospy.Service('set_command_attitude',numpyArray,self.command_attitude_callback)
+
         # Define attitude gains change service:
         self.attitude_gains_service = rospy.Service('set_attitude_gains',numpyArray,self.attitude_gains_callback)
         self.position_gains_service = rospy.Service('set_position_gains',numpyArray,self.position_gains_callback)
@@ -86,6 +91,18 @@ class AttitudeController():
         print(self.pos_derivative)
         print("New filter gain is: ")
         print(self.pos_filter)
+        a.message = "Receive successful, request received was: " + str(data.data)
+        return a
+
+    def command_attitude_callback(self,data):
+        if sqrt(data.data[0]**2 + data.data[1]**2 + data.data[2]**2 + data.data[3]**2) <= 1:
+            print("Valid quaternion!")
+            self.reference_attitude = np.array([[data.data[0]],[data.data[1]],[data.data[2]],[data.data[3]]]) # w,x,y,z
+            print("Command attitude has been changed to: " + str(self.reference_attitude))
+        else:
+            print("Invalid quaternion! It has not been changed and you're a bad boy >:(")
+
+        a = numpyArrayResponse()
         a.message = "Receive successful, request received was: " + str(data.data)
         return a
 
