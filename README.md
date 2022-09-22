@@ -1,6 +1,6 @@
 # Gazebo_Sim_2022
 This README assumes you already have Ubuntu 20.04 and ROS 1 Noetic installed, and that you have already created a catkin workspace.
-
+This is a comment from ryan (aka maria)
 Use this command to install the entire main branch onto your computer (make sure you are viewing the main branch). Perform this command while in /catkin_ws/src:
 
 git clone https://github.com/MUsurf/Gazebo_Sim_2022.git
