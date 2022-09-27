@@ -27,13 +27,26 @@ python3 -m pip install scipy
 sudo apt-get install python3-rosdep2  
 sudo rosdep init  
 
-If rosdep fails saying “ERROR: default sources list file already exists:”, just skip the rosdep init step. Next, update your rosdep installation:
+If rosdep fails saying “ERROR: default sources list file already exists:”, just skip the rosdep init step. 
+
+If you still run into scipy errors, run these commands:
+
+cd ~/Downloads
+wget http://archive.ubuntu.com/ubuntu/pool/universe/p/python-scipy/python-scipy_0.19.1-2ubuntu1_amd64.deb
+sudo apt-get install ./python-scipy_0.19.1-2ubuntu1_amd64.deb
+
+(I'm pretty sure this works)
+
+Next, update your rosdep installation:
 
 rosdep update
 
-Then, from /catkin_ws, use the following command to install all necessary dependencies:
+Then, from /catkin_ws, use the following commands to install all necessary dependencies:
 
-rosdep install –from-paths src –ignore-src -r -y  
+sudo apt install python3-testresources
+pip3 install --user --upgrade pip setuptools
+
+rosdep install --from-paths src --ignore-src -r -y  
 
 Finally, build your workspace with:
 
