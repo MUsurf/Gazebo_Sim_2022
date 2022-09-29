@@ -32,7 +32,9 @@ If rosdep fails saying “ERROR: default sources list file already exists:”, j
 If you still run into scipy errors, run these commands:
 
 cd ~/Downloads
+
 wget http://archive.ubuntu.com/ubuntu/pool/universe/p/python-scipy/python-scipy_0.19.1-2ubuntu1_amd64.deb
+
 sudo apt-get install ./python-scipy_0.19.1-2ubuntu1_amd64.deb
 
 (I'm pretty sure this works)
