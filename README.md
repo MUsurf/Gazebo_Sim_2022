@@ -1,7 +1,7 @@
 # Gazebo_Sim_2022
 This README assumes you already have Ubuntu 20.04 and ROS 1 Noetic installed, and that you have already created a catkin workspace.
 
-Use this command to install the entire main branch onto your computer (make sure you are viewing the main branch). Perform this command while in /catkin_ws/src:
+Use this command to install the entire main branch onto your computer (make sure you are viewing the main branch). Perform this command while in `~/catkin_ws/src`
 
 ```
 git clone https://github.com/MUsurf/Gazebo_Sim_2022.git
@@ -19,13 +19,11 @@ Source the necessary packages:
 source /usr/share/gazebo-11/setup.sh  
 source /opt/ros/noetic/setup.bash   
 source $HOME/catkin_ws/devel/setup.bash 
-  
 source ~/.bashrc
-
-cd ~/catkin_w
+cd ~/catkin_ws
 ```
 
-Next, you you will have to move all folders from the created Gazebo_Sim_2022 into the src folder.
+Next, you you will have to move all folders from the created Gazebo_Sim_2022 into the `src` folder.
 
 Install the appropriate scipy/rosdep packages:
 
@@ -35,15 +33,13 @@ sudo apt-get install python3-rosdep2
 sudo rosdep init  
 ```
 
-If rosdep fails saying “ERROR: default sources list file already exists:”, just skip the rosdep init step. 
+If rosdep fails saying `ERROR: default sources list file already exists:`, just skip the rosdep init step. 
 
 If you still run into scipy errors, run these commands:
 
 ```
 cd ~/Downloads
-
 wget http://archive.ubuntu.com/ubuntu/pool/universe/p/python-scipy/python-scipy_0.19.1-2ubuntu1_amd64.deb
-
 sudo apt-get install ./python-scipy_0.19.1-2ubuntu1_amd64.deb
 ```
 
@@ -55,12 +51,11 @@ Next, update your rosdep installation:
 rosdep update
 ```
 
-Then, from /catkin_ws, use the following commands to install all necessary dependencies:
+Then, from `~/catkin_ws`, use the following commands to install all necessary dependencies:
 
 ```
 sudo apt install python3-testresources
 pip3 install --user --upgrade pip setuptools
-
 rosdep install --from-paths src --ignore-src -r -y  
 ```
 
