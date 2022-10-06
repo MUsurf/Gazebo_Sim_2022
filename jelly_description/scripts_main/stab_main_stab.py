@@ -3,6 +3,7 @@
 # BEGIN IMPORT
 import rospy
 import roslaunch
+from math import sqrt
 # END IMPORT
 
 # BEGIN STD_MSGS
@@ -18,12 +19,16 @@ from std_msgs.msg import Float64MultiArray
 # END STD_MSGS
 
 # BEGIN SRV IMPORT
+# What kind of data is expected/sent
 from std_srvs.srv import SetBool
 from jelly_description.srv import numpyArray
 # END SRV IMPORT
 
+# Tell ros to pay attention to this node
 rospy.init_node("stab_main")
-rate = rospy.Rate(50)
+# In Hertz
+update_rate = 50
+rate = rospy.Rate(update_rate)
 
 # The main function will be the service client. We want our first service to turn the controller on and off, for example.
 # Another service will allow us to give an input pose and have that sent to the controller.
@@ -43,6 +48,7 @@ rospy.wait_for_service('set_position_gains')
 
 # Create service proxy functions.
 
+# Proxy functions access the services themselves
 try:
     controller_on_off = rospy.ServiceProxy('set_controller_state',SetBool)
     # controller_on_off(True) / controller_on_off(False)

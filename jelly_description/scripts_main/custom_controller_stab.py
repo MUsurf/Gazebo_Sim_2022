@@ -19,8 +19,10 @@ from std_msgs.msg import Int8
 
 # BEGIN SRV IMPORT
 from std_srvs.srv import SetBool,SetBoolResponse
+
+# Maybe?
 from jelly_description.srv import numpyArray
-from jelly_description.srv import numpyArrayResponse
+from jelly_description.uuv_gazebo_ros_plugins_msgs.srv import numpyArrayResponse
 # END SRV IMPORT
 
 # BEGIN SETUP

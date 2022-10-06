@@ -40,9 +40,11 @@ class ThrustAllocator():
         for i in range(0,8):
             self.publishers[i] = rospy.Publisher(self.topic_names[i], FloatStamped, queue_size=10)
             print(self.publishers[i])
+        # Takes publisher names, creates a list of publishers
         
         self.quaternion_subscriber = rospy.Subscriber('/jelly/imu', Imu, self.input_quaternion_orientation)
         self.wrench_subscriber = rospy.Subscriber('/jelly/controller/command_wrench', WrenchStamped, self.input_wrench)
+        # Wrench from controller
         self.allocator_state = False
         self.set_bool_service = rospy.Service('set_allocator_state',SetBool,self.allocator_state_callback)
 
@@ -161,8 +163,15 @@ class ThrustAllocator():
 
         return numpy.interp(force,[output_inter_low,output_inter_high],[input_inter_low,input_inter_high])
 
+    # Giant array
+    # Rows: x, y, x, torque x, torque y, torque z
+    # Columns: one for each motor
+    # TAM: Thrust Allocation Matrix
     def calculate_TAM(self):
+        # This is in the body frame: The force that will be applied by the rotors in the orientation of the sub
+        # The direction of positive force, negative means pushing down gives us up
         x_axis_normal_vectors = numpy.array([[1/sqrt(2),1/sqrt(2),0],[0,0,-1],[0,0,-1],[1/sqrt(2),-1/sqrt(2),0],[1/sqrt(2),1/sqrt(2),0],[0,0,-1],[0,0,-1],[1/sqrt(2),-1/sqrt(2),0]])
+        # Distance from Center of Gravity to Thruster
         position_vectors = numpy.array([[0.16931,-0.13868,-0.01801],[0.07044,-0.17671,0.07019],[-0.06964,-0.17671,0.07019],[-0.16848,-0.1387,-0.01801],[-0.16197,0.1428,-0.01801],[-0.06964,0.17529,0.07019],[0.07044,0.17529,0.07019],[0.16931,0.13726,-0.01801]])
 
         force_coefficients = numpy.zeros((3,8))
@@ -182,6 +191,8 @@ if __name__ == '__main__':
     try:
         node = ThrustAllocator()
         rospy.spin()
+        #rospy.spin: get data out as soon as possible, no delay
+
     except rospy.ROSInterruptException:
         print('Attitude::Exception')
     print('Leaving Controller')
