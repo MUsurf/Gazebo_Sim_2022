@@ -64,6 +64,12 @@ Finally, build your workspace with:
 ```
 catkin_make install -j1
 ```
+OR if that gives errors uses the newer version below, catkin build. (Note: you will need to delete your build and devel folders if previous catkin_make builds failed)
+
+```
+catkin build
+source devel/setup.bash
+```
 
 To test the installation of Gazebo simulation code, run the following command:
 
