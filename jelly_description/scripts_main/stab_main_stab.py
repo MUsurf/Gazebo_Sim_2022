@@ -3,23 +3,20 @@
 # BEGIN IMPORT
 import rospy
 import roslaunch
+import roslib
+import actionlib
+import actionlib_msgs
 # END IMPORT
 
 # BEGIN STD_MSGS
 import numpy
-from geometry_msgs.msg import WrenchStamped
-from sensor_msgs.msg import Imu
-from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Pose
-from std_msgs.msg import Int8
 import roslaunch
-import time
-from std_msgs.msg import Float64MultiArray
 # END STD_MSGS
 
 # BEGIN SRV IMPORT
 from std_srvs.srv import SetBool
 from jelly_description.srv import numpyArray
+from jelly_description.msg import trajectoryAction,trajectoryGoal
 # END SRV IMPORT
 
 rospy.init_node("stab_main")
@@ -30,8 +27,8 @@ rate = rospy.Rate(50)
 # A third service will allow a heading mode and will convert the input heading to a set of quaternion inputs.
 print("Waiting for controller state service")
 rospy.wait_for_service('set_controller_state')
-print("Waiting for allocator state service")
-rospy.wait_for_service('set_allocator_state')
+# print("Waiting for allocator state service")
+# rospy.wait_for_service('set_allocator_state')
 print("Waiting for command position service")
 rospy.wait_for_service('set_command_position')
 print("Waiting for command attitude service")
@@ -40,15 +37,15 @@ print("Waiting for attitude gain service.")
 rospy.wait_for_service('set_attitude_gains')
 print("Waiting for position gain service.")
 rospy.wait_for_service('set_position_gains')
-
+# THis is comment
 # Create service proxy functions.
 
 try:
     controller_on_off = rospy.ServiceProxy('set_controller_state',SetBool)
     # controller_on_off(True) / controller_on_off(False)
 
-    allocator_on_off = rospy.ServiceProxy('set_allocator_state',SetBool)
-    # allocator_on_off(True) / allocator_on_off(False)
+    # allocator_on_off = rospy.ServiceProxy('set_allocator_state',SetBool)
+    # # allocator_on_off(True) / allocator_on_off(False)
 
     command_position_serv_prox = rospy.ServiceProxy('set_command_position',numpyArray)
     # command_position_numpy_array = numpy.array([[1.0],[1.0],[-5.0]])
@@ -70,24 +67,38 @@ try:
 
 except rospy.ServiceException as e:
     print("Service proxy creation failed.")
+print("Past try/except")
 
-# Test of each proxy service.
+# Action test!
+trajectory_action_proxy = actionlib.SimpleActionClient('follow_trajectory',trajectoryAction)
+trajectory_action_proxy.wait_for_server()
+goal = trajectoryGoal()
+target_location_array = numpy.array([[1.0],[1.0],[-10.0]])
+desired_end_direction_array = numpy.array([[1.0],[0.0],[0.0]])
+goal.target_location = target_location_array
+goal.desired_end_direction = desired_end_direction_array
+trajectory_action_proxy.send_goal(goal)
+trajectory_action_proxy.wait_for_result(rospy.Duration.from_sec(5.0))
 
-response_1 = controller_on_off(True)
+# Action test!
 
-allocator_on_off(True) # Test of calling without intersecting message.
+# # Test of each proxy service.
 
-command_position_numpy_array = numpy.array([[1.0],[1.0],[-5.0]])
-response = command_position_serv_prox([command_position_numpy_array[0,0],command_position_numpy_array[1,0],command_position_numpy_array[2,0]])
+# response_1 = controller_on_off(True)
 
-command_attitude_numpy_array = numpy.array([[1.0],[0.0],[0.0],[0.0]]) # w,x,y,z
-response_att = command_attitude_serv_prox([command_attitude_numpy_array[0,0],command_attitude_numpy_array[1,0],command_attitude_numpy_array[2,0],command_attitude_numpy_array[3,0]])
+# #allocator_on_off(True) # Test of calling without intersecting message.
 
-new_attitude_gains = numpy.array([[-505.5],[100.5]]) # These gains are unstable but useful for testing.
-#attitude_gain_serv_prox([new_attitude_gains[0,0],new_attitude_gains[1,0]])
+# command_position_numpy_array = numpy.array([[1.0],[1.0],[-5.0]])
+# response = command_position_serv_prox([command_position_numpy_array[0,0],command_position_numpy_array[1,0],command_position_numpy_array[2,0]])
 
-new_position_gains = numpy.array([[25.5],[4000],[42],[44]]) # P, I, D, N These gains are unstable but useful for testing.
-#response_gain_1 = position_gain_serv_prox([new_position_gains[0,0],new_position_gains[1,0],new_position_gains[2,0],new_position_gains[3,0]])
+# command_attitude_numpy_array = numpy.array([[1.0],[0.0],[0.0],[0.0]]) # w,x,y,z
+# response_att = command_attitude_serv_prox([command_attitude_numpy_array[0,0],command_attitude_numpy_array[1,0],command_attitude_numpy_array[2,0],command_attitude_numpy_array[3,0]])
 
-#print(response)
-#print(response_2)
+# new_attitude_gains = numpy.array([[-505.5],[100.5]]) # These gains are unstable but useful for testing.
+# #attitude_gain_serv_prox([new_attitude_gains[0,0],new_attitude_gains[1,0]])
+
+# new_position_gains = numpy.array([[25.5],[4000],[42],[44]]) # P, I, D, N These gains are unstable but useful for testing.
+# #response_gain_1 = position_gain_serv_prox([new_position_gains[0,0],new_position_gains[1,0],new_position_gains[2,0],new_position_gains[3,0]])
+
+# #print(response)
+# #print(response_2)

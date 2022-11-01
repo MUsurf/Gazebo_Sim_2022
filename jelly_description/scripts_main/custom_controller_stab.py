@@ -6,6 +6,8 @@ import numpy
 import numpy as np
 from math import sqrt
 import math
+import roslib
+import actionlib
 # END IMPORT
 
 # BEGIN STD_MSGS
@@ -21,37 +23,39 @@ from std_msgs.msg import Int8
 from std_srvs.srv import SetBool,SetBoolResponse
 from jelly_description.srv import numpyArray
 from jelly_description.srv import numpyArrayResponse
+from jelly_description.msg import trajectoryAction
 # END SRV IMPORT
-
+#%$#1
 # BEGIN SETUP
 rospy.init_node("custom_controller_stab")
-update_rate = 20
-rate = rospy.Rate(50)
+update_rate = 50 #Hz
+rate = rospy.Rate(update_rate) 
 # END SETUP
 # rando = Odometry()
 # rando.pose.pose.position.x
-class AttitudeController():
+class PositionAttitudeController():
     def __init__(self):
+        #%$#3.1
         # Position control system gains
         self.pos_proportional = 25.9374492277101
         self.pos_integral = 3.63947016352946
         self.pos_derivative = 41.8416925944087
         self.pos_filter = 43.7209955392367
-        self.update_time = 1/50
+        self.update_time = 1/update_rate
         # Attitude control system gains
         self.q_proportional = 5
         self.omega_proportional = 2
         # Desired position
         #self.reference_position = numpy.array([[0.0],[0.0],[-5]]) Defined in int_diff_eqs
         # Desired attitude (can be changed to take quaternion inputs from trajectory at later date.) w, x, y, z
-        self.reference_attitude = numpy.array([[1.0],[0.0],[0.0],[0.0]])#numpy.array([[0.7071068],[0.0],[0.7071068],[0]])#numpy.array([[0.9659258],[0.0],[-0.258819],[0.0]])#
+        #self.reference_attitude = numpy.array([[1.0],[0.0],[0.0],[0.0]])#numpy.array([[0.7071068],[0.0],[0.7071068],[0]])#numpy.array([[0.9659258],[0.0],[-0.258819],[0.0]])#
         # Initialize position controller difference equations
         self.int_diff_eqs()
+        self.first_int_diff_eqs()
         # Define publisher and subscriber objects.
         #self.flag_subscriber = rospy.Subscriber("/jelly/main_flag",Int8,self.import_flag)
         self.wrench_publisher = rospy.Publisher("/jelly/controller/command_wrench",WrenchStamped, queue_size=1)
         # self.command_publisher = rospy.Publisher("/jelly/commandZ", Float32, queue_size=10)
-        self.desired_position_subscriber = rospy.Subscriber("/jelly/command_pose", Pose, self.input_command)
         self.pose_subscriber = rospy.Subscriber("/jelly/pose_gt", Odometry, self.input_position)
         self.quaternion_subscriber = rospy.Subscriber('/jelly/imu', Imu, self.input_quaternion_orientation)
         
@@ -65,6 +69,18 @@ class AttitudeController():
         # Define attitude gains change service:
         self.attitude_gains_service = rospy.Service('set_attitude_gains',numpyArray,self.attitude_gains_callback)
         self.position_gains_service = rospy.Service('set_position_gains',numpyArray,self.position_gains_callback)
+        self.trajectory_action = actionlib.SimpleActionServer('follow_trajectory',trajectoryAction,self.trajectory_callback,False)
+    
+    def trajectory_callback(self,data):
+        self.trajectory_start_point = self.current_position
+        self.trajectory_end_point = data.target_location
+        self.trajectory_end_direction = data.desired_end_direction
+        print("Start point: ")
+        print(self.trajectory_start_point)
+        print("End point: ")
+        print(self.trajectory_end_point)
+        print("Direction: ")
+        print(self.trajectory_end_direction)
 
     def attitude_gains_callback(self,data):
         a = numpyArrayResponse()
@@ -83,6 +99,7 @@ class AttitudeController():
         self.pos_integral = data.data[1]
         self.pos_derivative = data.data[2]
         self.pos_filter = data.data[3]
+        self.int_diff_eqs()
         print("New proportional gain is: ")
         print(self.pos_proportional)
         print("New integral gain is: ")
@@ -120,22 +137,8 @@ class AttitudeController():
         print("Controller state has been changed to: " + str(self.controller_state))
         return a
     
-    def input_command(self,msg1):
-        try:
-            # print(msg1.x)
-            self.reference_position[0,0] = msg1.position.x
-            # print(self.reference_position[0,0])
-            self.reference_position[1,0] = msg1.position.y
-            self.reference_position[2,0] = msg1.position.z
-            self.reference_attitude[0,0] = msg1.orientation.w
-            self.reference_attitude[1,0] = msg1.orientation.x
-            self.reference_attitude[2,0] = msg1.orientation.y
-            self.reference_attitude[3,0] = msg1.orientation.z
-            # print(self.reference_position)
-        except:
-            print("Trajectory not available. Setting reference to default.")
-
     def int_diff_eqs(self):
+        #%$#3.2
         a = 1 + ((self.pos_filter * self.update_time)/2)
         b = ((self.pos_filter * self.update_time)/2) - 1
         b0 = ((2*self.pos_proportional*a) + (self.pos_integral*self.update_time*a) + (2*self.pos_derivative*self.pos_filter))
@@ -147,13 +150,14 @@ class AttitudeController():
 
         self.diff_eq_coeff = numpy.array([(b0/a0),(b1/a0),(b2/a0),(a1/a0),(a2/a0)])
 
+    def first_int_diff_eqs(self):
         self.command_force = numpy.array([[0.0],[0.0],[0.0]]) # Don't do this, just use numpy.zeros(col,row) to initialize arrays.
         self.command_force_1 = numpy.array([[0.0],[0.0],[0.0]])
         self.command_force_2 = numpy.array([[0.0],[0.0],[0.0]])
         self.error_pos = numpy.array([[0.0],[0.0],[0.0]])
         self.error_pos_1 = numpy.array([[0.0],[0.0],[0.0]])
         self.error_pos_2 = numpy.array([[0.0],[0.0],[0.0]])
-        self.reference_position = numpy.array([[0.0],[0.0],[-10.0]])
+        self.reference_position = numpy.array([[0.0],[0.0],[-1.0]])
         self.reference_attitude = numpy.array([[1.0],[0.0],[0.0],[0.0]])
         self.quaternion_vector = numpy.array([[1.0],[0.0],[0.0],[0.0]])
         self.angular_velocity_vector = numpy.array([[0.0],[0.0],[0.0]])
@@ -236,7 +240,9 @@ class AttitudeController():
         # Publish wrench
         self.wrench_publisher.publish(message)
 
-node = AttitudeController()
+#%$#2
+
+node = PositionAttitudeController()
 
 while not rospy.is_shutdown():
 
