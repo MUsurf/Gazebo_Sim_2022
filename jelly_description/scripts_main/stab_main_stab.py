@@ -71,9 +71,11 @@ print("Past try/except")
 
 # Action test!
 trajectory_action_proxy = actionlib.SimpleActionClient('follow_trajectory',trajectoryAction)
+print("Before found server")
 trajectory_action_proxy.wait_for_server()
+print("Found server")
 goal = trajectoryGoal()
-target_location_array = numpy.array([[1.0],[1.0],[-10.0]])
+target_location_array = numpy.array([[2.0],[2.0],[-10.0]])
 desired_end_direction_array = numpy.array([[1.0],[0.0],[0.0]])
 goal.target_location = target_location_array
 goal.desired_end_direction = desired_end_direction_array
