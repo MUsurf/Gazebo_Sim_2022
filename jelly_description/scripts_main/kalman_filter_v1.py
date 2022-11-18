@@ -70,6 +70,8 @@ class KalmanFilter():
         self.ang_vel_state[2,0] = first_quaternion_message.angular_velocity.z
 
         self.covariance_matrix = 0.5 * numpy.identity(6)
+
+        self.process_noise_covar_matrix = 0.1 * numpy.ones((6,6))
         #print(self.quat_state)
         #print(self.ang_vel_state)
         #print(self.state_vector)
@@ -85,7 +87,7 @@ class KalmanFilter():
 
     def input_quaternion_orientation(self, msg2):
         # Put vectors into numpy array for further processing.
-        #print("Input Orien: ")
+        print("Input Orien: ")
         self.quaternion_vector[0,0] = msg2.orientation.w
         self.quaternion_vector[1,0] = msg2.orientation.x
         self.quaternion_vector[2,0] = msg2.orientation.y
@@ -97,6 +99,12 @@ class KalmanFilter():
         #self.quaternion_update()
         #self.angular_vel_update()
         #print(self.quaternion_vector)
+
+        ### These are added because the measurement update steps have not been completed yet.
+        self.quat_state = self.quaternion_vector
+        #print(self.quat_state)
+        self.ang_vel_state = self.angular_velocity_vector
+        ### END
     
     def quaternion_update(self):
         print("Quat update step.")
@@ -105,17 +113,67 @@ class KalmanFilter():
         print("Ang Vel update step.")
 
     def predict(self):
-        # This is the time-update step.
-        
-        quat,vel = self.process_model(self.quaternion_vector,self.angular_velocity_vector)
-        print("State Quaternion: ")
-        print(self.quat_state)
-        print("Predicted Quaternion: ")
-        print(quat)
-        print("State Velocity: ")
-        print(self.ang_vel_state)
-        print("Predicted Velocity: ")
-        print(vel)
+
+        # Process noise covariance matrix is initialized in init_state_vector so it will not be recreated upon each iteration.
+
+        # Begin Equation 36, [1] Calculate matrix W
+        intermediate_covar_matrix = self.covariance_matrix + self.process_noise_covar_matrix
+        #print(test_2)
+        S  = numpy.linalg.cholesky(intermediate_covar_matrix)
+        S_1 = S.T * math.sqrt(12)
+        S_2 = -1 * S.T * math.sqrt(12)
+        #print(S_1)
+        #print(S_2)
+        W = numpy.concatenate([S_1,S_2],axis=1) # Creates a 12 (columns) by 6 (rows) matrix from which our sigma points will be computed.
+        # End Equation 36, [1]
+
+        #print(W)
+        X = numpy.zeros((7,12)) # Initialize matrix X in Equation 34 of [1]. May not be needed.
+        Y = numpy.zeros((7,12)) # Initialize matrix Y in Equation 37 of [1]. May not be needed.
+        Y_quat = numpy.zeros((4,12)) # Creation of just quaternion segemt of Y for computation of quaternion mean.
+        Y_ang_vel = numpy.zeros((3,12)) # Creation of angular velocity segment of Y for computation ang vel mean.
+
+        #print(X)
+
+        # The "outer" for loop converts points in W into quaternion and angular velocity sigma points before running that state vector through the process model.
+
+        for outer,col in enumerate(W.T):
+            #print(col[0:3])
+            
+            angle = numpy.linalg.norm(col[0:3]) # Equation 14, [1]
+            axis = col[0:3] *(1 / numpy.linalg.norm(col[0:3])) # Equation 15, [1]
+                
+            delta_q = numpy.array([[cos(angle/2)],[axis[0]*sin(angle/2)],[axis[1]*sin(angle/2)],[axis[2]*sin(angle/2)]])
+            print("sigma_quat test: ")
+            print(delta_q)
+            print("quat state test: ")
+            print(self.quat_state)
+            sigma_quat = self.quaternion_multiply(self.quat_state,delta_q) 
+            sigma_vel = col[3:6].reshape(-1,1) + self.ang_vel_state
+
+            # print("Sigma Quat: ")
+            # print(sigma_quat)
+            # print("Sigma Vel: ")
+            # print(sigma_vel)
+            # sigma state vector is 
+            sigma_state_vector = numpy.concatenate([sigma_quat,sigma_vel],axis=0)
+
+            new_sigma_quat,new_sigma_vel = self.process_model(sigma_quat,sigma_vel) #Equation 37,[1]
+
+            new_sigma_state_vector = numpy.concatenate([new_sigma_quat,new_sigma_vel],axis=0)
+            # Adds the state vectors in sigma_state_vector and new_sigma_state_vector to the matrices X and Y, respectively.
+            for inner in range(len(sigma_state_vector)):
+                X[inner,outer] = sigma_state_vector[inner]
+                Y[inner,outer] = new_sigma_state_vector[inner]
+            # Adds quaternion state vector components to Y_quat for feeding into quaternion mean calculator.
+            for inner in range(len(new_sigma_quat)):
+                Y_quat[inner,outer] = new_sigma_quat[inner]
+            # Adds ang_vel state vector components to Y_ang_vel for feeding into barycentric mean calculator.
+            for inner in range(len(new_sigma_vel)):
+                Y_ang_vel[inner,outer] = new_sigma_vel[inner]
+            #print(Y)
+        # Break out of "outer" for loop to do mean calculations.
+        self.compute_quat_mean(Y_quat) # Need to add a self.quat_state = to the front.
 
     def process_model(self,input_quaternion,input_angular_velocity):
         print("Process model.")
@@ -142,14 +200,26 @@ class KalmanFilter():
         # Output is a columnn vector w,x,y,z (hopefully)
         w0, x0, y0, z0 = quaternion0
         w1, x1, y1, z1 = quaternion1
-        return numpy.array([[-x1*x0 - y1*y0 - z1*z0 + w1*w0],
-                     [x1*w0 + y1*z0 - z1*y0 + w1*x0],
-                    [-x1*z0 + y1*w0 + z1*x0 + w1*y0],
-                     [x1*y0 - y1*x0 + z1*w0 + w1*z0]])
+        return numpy.array([(-x1*x0 - y1*y0 - z1*z0 + w1*w0),
+                     (x1*w0 + y1*z0 - z1*y0 + w1*x0),
+                    (-x1*z0 + y1*w0 + z1*x0 + w1*y0),
+                     (x1*y0 - y1*x0 + z1*w0 + w1*z0)])
+
+    def compute_quat_mean(self,input_advanced_state_vectors):
+        print("Welcome to quat mean calculation! I quit you do it...")
+        print(input_advanced_state_vectors)
+
+        # Start here on 11/18
+
+    # def inverse_quaternion(self,input_quaternion):
+    #     # Computes the multiplicative inverse of the given quaternion, as requried by the quaternion mean finding process in Equation 50 of [1].
+    #     return numpy.array([[input_quaternion[0]],[(-1 * input_quaternion[1])],[(-1 * input_quaternion[2])],[(-1 * input_quaternion[3])]])
 
 node = KalmanFilter()
 
 while not rospy.is_shutdown():
 
     node.predict()
+    print("Outside node test")
+    print(node.quat_state)
     rate.sleep()
