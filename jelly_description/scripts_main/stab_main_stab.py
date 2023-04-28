@@ -27,8 +27,8 @@ rate = rospy.Rate(50)
 # A third service will allow a heading mode and will convert the input heading to a set of quaternion inputs.
 print("Waiting for controller state service")
 rospy.wait_for_service('set_controller_state')
-# print("Waiting for allocator state service")
-# rospy.wait_for_service('set_allocator_state')
+print("Waiting for allocator state service")
+rospy.wait_for_service('set_allocator_state')
 print("Waiting for command position service")
 rospy.wait_for_service('set_command_position')
 print("Waiting for command attitude service")
@@ -44,7 +44,7 @@ try:
     controller_on_off = rospy.ServiceProxy('set_controller_state',SetBool)
     # controller_on_off(True) / controller_on_off(False)
 
-    # allocator_on_off = rospy.ServiceProxy('set_allocator_state',SetBool)
+    allocator_on_off = rospy.ServiceProxy('set_allocator_state',SetBool)
     # # allocator_on_off(True) / allocator_on_off(False)
 
     command_position_serv_prox = rospy.ServiceProxy('set_command_position',numpyArray)
@@ -70,37 +70,37 @@ except rospy.ServiceException as e:
 print("Past try/except")
 
 # Action test!
-trajectory_action_proxy = actionlib.SimpleActionClient('follow_trajectory',trajectoryAction)
-print("Before found server")
-trajectory_action_proxy.wait_for_server()
-print("Found server")
-goal = trajectoryGoal()
-target_location_array = numpy.array([[2.0],[2.0],[-10.0]])
-desired_end_direction_array = numpy.array([[1.0],[0.0],[0.0]])
-goal.target_location = target_location_array
-goal.desired_end_direction = desired_end_direction_array
-trajectory_action_proxy.send_goal(goal)
-trajectory_action_proxy.wait_for_result(rospy.Duration.from_sec(5.0))
+# trajectory_action_proxy = actionlib.SimpleActionClient('follow_trajectory',trajectoryAction)
+# print("Before found server")
+# trajectory_action_proxy.wait_for_server()
+# print("Found server")
+# goal = trajectoryGoal()
+# target_location_array = numpy.array([[2.0],[2.0],[-10.0]])
+# desired_end_direction_array = numpy.array([[1.0],[0.0],[0.0]])
+# goal.target_location = target_location_array
+# goal.desired_end_direction = desired_end_direction_array
+# trajectory_action_proxy.send_goal(goal)
+# trajectory_action_proxy.wait_for_result(rospy.Duration.from_sec(5.0))
 
 # Action test!
 
 # # Test of each proxy service.
 
-# response_1 = controller_on_off(True)
+response_1 = controller_on_off(True)
 
-# #allocator_on_off(True) # Test of calling without intersecting message.
+allocator_on_off(True) # Test of calling without intersecting message.
 
-# command_position_numpy_array = numpy.array([[1.0],[1.0],[-5.0]])
-# response = command_position_serv_prox([command_position_numpy_array[0,0],command_position_numpy_array[1,0],command_position_numpy_array[2,0]])
+command_position_numpy_array = numpy.array([[1.0],[1.0],[-5.0]])
+response = command_position_serv_prox([command_position_numpy_array[0,0],command_position_numpy_array[1,0],command_position_numpy_array[2,0]])
 
-# command_attitude_numpy_array = numpy.array([[1.0],[0.0],[0.0],[0.0]]) # w,x,y,z
-# response_att = command_attitude_serv_prox([command_attitude_numpy_array[0,0],command_attitude_numpy_array[1,0],command_attitude_numpy_array[2,0],command_attitude_numpy_array[3,0]])
+command_attitude_numpy_array = numpy.array([[1.0],[0.0],[0.0],[0.0]]) # w,x,y,z
+response_att = command_attitude_serv_prox([command_attitude_numpy_array[0,0],command_attitude_numpy_array[1,0],command_attitude_numpy_array[2,0],command_attitude_numpy_array[3,0]])
 
-# new_attitude_gains = numpy.array([[-505.5],[100.5]]) # These gains are unstable but useful for testing.
-# #attitude_gain_serv_prox([new_attitude_gains[0,0],new_attitude_gains[1,0]])
+#new_attitude_gains = numpy.array([[-505.5],[100.5]]) # These gains are unstable but useful for testing.
+#attitude_gain_serv_prox([new_attitude_gains[0,0],new_attitude_gains[1,0]])
 
-# new_position_gains = numpy.array([[25.5],[4000],[42],[44]]) # P, I, D, N These gains are unstable but useful for testing.
-# #response_gain_1 = position_gain_serv_prox([new_position_gains[0,0],new_position_gains[1,0],new_position_gains[2,0],new_position_gains[3,0]])
+#new_position_gains = numpy.array([[25.5],[4000],[42],[44]]) # P, I, D, N These gains are unstable but useful for testing.
+#response_gain_1 = position_gain_serv_prox([new_position_gains[0,0],new_position_gains[1,0],new_position_gains[2,0],new_position_gains[3,0]])
 
-# #print(response)
-# #print(response_2)
+#print(response)
+#print(response_2)

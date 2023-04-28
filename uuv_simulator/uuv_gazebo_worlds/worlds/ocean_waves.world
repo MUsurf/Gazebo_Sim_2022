@@ -102,7 +102,9 @@
         </vertical_angle>
       </constant_current>
     </plugin>
-
+    <!--"Gazebo Plugin" is a Matlab plugin which allows for time synchronized simulations between Simulink and Gazebo -->
+    <plugin name="GazeboPlugin" filename="/home/nathan/GazeboPlugin/export/lib/libGazeboCoSimPlugin.so"><portNumber>14581</portNumber></plugin>
+    <!--This plugin will need to be added to any world file in which Matlab is desired to be used. Filename will need to point to your "libGazeboCoSimPlugin.so" file.-->
     <plugin name="sc_interface" filename="libuuv_sc_ros_interface_plugin.so"/>
 
     <gui fullscreen='0'>

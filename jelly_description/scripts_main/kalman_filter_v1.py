@@ -192,7 +192,19 @@ class KalmanFilter():
         # new_ang_vel = predict_ang_vel # Equation 8, [1]
         return new_quaternion,input_angular_velocity # Angular velocity is assumed constant during the process model.
         # self.state_vector = numpy.concatenate(new_quaternion,predict_ang_vel)
-        
+    
+    def compute_quat_mean(self,input_advanced_state_vectors):
+        print("Welcome to quat mean calculation! I quit you do it...")
+        #print(input_advanced_state_vectors)
+        # We will use the current quaternion state, self.quat_state, as the initial quaternion for the mean finding algorithm.
+        quaternion_error_vector = np.zeros((4,12))
+        for int,columns in enumerate(input_advanced_state_vectors.T):
+            quaternion_error_vector[:,int] = self.quaternion_multiply(self.quat_state,np.transpose(columns))
+            # I may not need to keep the "quaternion error vector" matrix if I also perform Eq. 54 in this for loop.
+            print(columns)
+        print("End mean calc")
+        # Start here on 11/18
+
     def quaternion_multiply(self,quaternion1, quaternion0):
 
         # Quaternion multiplication function copied from:
@@ -205,15 +217,9 @@ class KalmanFilter():
                     (-x1*z0 + y1*w0 + z1*x0 + w1*y0),
                      (x1*y0 - y1*x0 + z1*w0 + w1*z0)])
 
-    def compute_quat_mean(self,input_advanced_state_vectors):
-        print("Welcome to quat mean calculation! I quit you do it...")
-        print(input_advanced_state_vectors)
-
-        # Start here on 11/18
-
-    # def inverse_quaternion(self,input_quaternion):
-    #     # Computes the multiplicative inverse of the given quaternion, as requried by the quaternion mean finding process in Equation 50 of [1].
-    #     return numpy.array([[input_quaternion[0]],[(-1 * input_quaternion[1])],[(-1 * input_quaternion[2])],[(-1 * input_quaternion[3])]])
+    def inverse_quaternion(self,input_quaternion):
+        # Computes the multiplicative inverse of the given quaternion, as requried by the quaternion mean finding process in Equation 50 of [1].
+        return numpy.array([[input_quaternion[0]],[(-1 * input_quaternion[1])],[(-1 * input_quaternion[2])],[(-1 * input_quaternion[3])]])
 
 node = KalmanFilter()
 
