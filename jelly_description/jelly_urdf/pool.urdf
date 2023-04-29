@@ -1,18 +1,18 @@
 <?xml version='1.0'?>
-<robot name="goal">
+<robot name="pool">
 
 <link name="world" />
 <joint name="world_joint"  type="fixed">
     <origin xyz="32 -27 -40" rpy="0 0 0" />
     <parent link="world"/>
-    <child link="goal_base_link"/>
+    <child link="pool_base_link"/>
 </joint>
 
   <!-- Base Link -->
-  <link name="goal_base_link">
+  <link name="pool_base_link">
 
     <!-- Caster -->
-    <visual name="goal">
+    <visual name="pool">
       <origin xyz="0.2 0 -0.125" rpy="0 0 0" />
       <geometry>
         <mesh><uri>file://pool.obj</uri></mesh>
